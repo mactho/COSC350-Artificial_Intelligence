@@ -1,0 +1,98 @@
+colours <- c("Yellow","Blue","Red","Green","White")
+Nationality <- c("Norweigan","Danish","British","German","Swedish")
+Smokes <- c("Dunhill","Blends","Pallmall","Prince","Bluemasters")
+Drinks <- c("Tea","Beer","Water","Coffee","Milk")
+Pet <- c("Horse","Cats","Dogs","Birds","Fish")
+
+fitnessTest <- function(solutionMatrix){
+	score = 15
+	# The Brit lives in the red house
+	if((which(solutionMatrix[2,]==3)) == (which(solutionMatrix[1,]==3))){score = score-1}
+	# The Swede keeps dogs as pets
+	if((which(solutionMatrix[2,]==5)) == (which(solutionMatrix[5,]==3))){score = score-1}
+	# The Dane drinks tea
+	if((which(solutionMatrix[2,]==2)) == (which(solutionMatrix[4,]==1))){score = score-1}
+	# The green house is on the immediate left of the white house
+	if((which(solutionMatrix[1,]==4)) == (which(solutionMatrix[1,]==5)-1)){score = score-1}
+	# The green houses owner drinks coffee
+	if((which(solutionMatrix[1,]==4)) == (which(solutionMatrix[4,]==4))){score = score-1}
+	# The owner who smokes pallmalls rears birds
+	if((which(solutionMatrix[3,]==3)) == (which(solutionMatrix[5,]==4))){score = score-1}
+	# The owner of the yellow house smokes Dunhill
+	if((which(solutionMatrix[1,]==1)) == (which(solutionMatrix[3,]==1))){score = score-1}
+	# The owner of the centre house drinks milk
+	if((which(solutionMatrix[4,]==5)) == 3){score = score-1}
+	# The Norwegian lives in the first house
+	if((which(solutionMatrix[2,]==1)) == 1){score = score-1}
+	# The owner who smokes Blends lives next to the one that keeps cats
+	if((which(solutionMatrix[3,]==2)) == (which(solutionMatrix[5,]==2)-1)|(which(solutionMatrix[3,]==2)) == (which(solutionMatrix[5,]==2)+1)){score = score-1}
+	# The owner who keeps the horse lives next to the one who smokes dunhill
+	if((which(solutionMatrix[5,]==1)) == (which(solutionMatrix[3,]==1)-1)|(which(solutionMatrix[5,]==1)) == (which(solutionMatrix[3,]==1)+1)){score = score-1}
+	# The owner who smokes bluemasters drinks beer
+	if((which(solutionMatrix[3,]==5)) == (which(solutionMatrix[4,]==2))){score = score-1}
+	# The German smokes Prince
+	if((which(solutionMatrix[2,]==4)) == (which(solutionMatrix[3,]==4))){score = score-1}
+	# The Norwegian lives next to the blue house
+	if((which(solutionMatrix[2,]==1)) == (which(solutionMatrix[1,]==2)-1)|(which(solutionMatrix[2,]==1)) == (which(solutionMatrix[1,]==2)+1)){score = score-1}
+	# The owner who smokes Blends lives next to the one who drinks water
+	if((which(solutionMatrix[3,]==2)) == (which(solutionMatrix[4,]==3)-1)|(which(solutionMatrix[3,]==2)) == (which(solutionMatrix[4,]==3)+1)){score = score-1}
+	
+	return(score)
+}
+
+permutations <- function(n){
+    if(n==1){
+        return(matrix(1))
+    } else {
+        sp <- permutations(n-1)
+        p <- nrow(sp)
+        A <- matrix(nrow=n*p,ncol=n)
+        for(i in 1:n){
+            A[(i-1)*p+1:p,] <- cbind(i,sp+(sp>=i))
+        }
+        return(A)
+    }
+}
+
+getSolution <- function(n){
+	sol=c()
+	for(i in 1:length(n)){
+		sol=c(sol,perms[n[i],])
+	}
+	return(matrix(sol,5,5,byrow=TRUE))
+}
+
+popsize=20
+parameters=5
+generations=100000
+CR=0.4
+F=0.8
+
+fit = c()
+pop = matrix(round(runif(popsize * parameters,1,120)),popsize,parameters)
+for(i in 1:nrow(pop)){
+	fit=c(fit,fitnessTest(getSolution(pop[i,])))
+}
+
+for (i in 1:generations)
+{
+	index=sample(popsize,4)
+	crtf=CR>runif(parameters)
+	crtf=which(crtf==T)
+	challenger=pop[index[1],]
+	challenger[crtf]=abs(round(pop[index[2],crtf]-F*(pop[index[3],crtf]-pop[index[4],crtf])))
+	for(j in 1:length(challenger)){
+		if(challenger[j]>120){
+			challenger[j]=sample(1:120,1)
+		}
+	}
+	challengerFitness=fitnessTest(getSolution(challenger))	
+	if(challengerFitness<fit[index[1]]){
+		pop[index[1],]=challenger
+		fit[index[1]]=challengerFitness
+	}
+}
+index=which(fit==min(fit))[1]
+print(pop[index,])
+finalAnswer = matrix(getSolution(pop[index,]),5,5,dimnames = list(c("Colour","Nationality","Smokes","Drinks","Pets"),c("House1","House2","House3","House4","House5")))
+min(fit)
